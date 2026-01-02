@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Pusab&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <div class="gd-logo">
+                    <span class="geo">GEOMETRY</span>
+                    <span class="dash">DASH</span>
+                </div>
+                <div class="loading-bar-container">
+                    <div class="loading-bar"></div>
+                </div>
+                <div class="loading-text">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen">
+            <div class="menu-background">
+                <div class="ground-layer"></div>
+            </div>
+            <div class="menu-content">
+                <div class="gd-title">
+                    <div class="title-geo">GEOMETRY</div>
+                    <div class="title-dash">DASH</div>
+                </div>
+                <div class="menu-buttons">
+                    <button class="gd-button play-btn" id="play-btn">
+                        <div class="button-icon play-icon"></div>
+                    </button>
+                    <button class="gd-button icon-btn" id="icon-btn">
+                        <div class="button-icon icon-icon"></div>
+                    </button>
+                    <button class="gd-button settings-btn" id="settings-btn">
+                        <div class="button-icon settings-icon"></div>
+                    </button>
+                </div>
+                <div class="menu-bottom-buttons">
+                    <button class="gd-small-button achievements-btn" id="achievements-btn">
+                        <div class="small-icon achievement-icon"></div>
+                    </button>
+                    <button class="gd-small-button stats-btn" id="stats-btn">
+                        <div class="small-icon stats-icon"></div>
+                    </button>
+                    <button class="gd-small-button info-btn" id="info-btn">
+                        <div class="small-icon info-icon"></div>
+                    </button>
+                </div>
+                <div class="player-icon-display">
+                    <canvas id="menu-player-icon" width="60" height="60"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Select -->
+        <div id="level-select" class="screen">
+            <div class="screen-header">
+                <button class="back-button" id="level-back-btn">
+                    <span class="arrow">←</span>
+                </button>
+                <h1 class="screen-title">SELECT LEVEL</h1>
+            </div>
+            <div class="level-carousel">
+                <button class="carousel-arrow left-arrow" id="level-prev">❮</button>
+                <div class="level-display">
+                    <div class="level-card" id="level-card">
+                        <div class="level-image" id="level-image"></div>
+                        <div class="level-info">
+                            <div class="level-name" id="level-name">Stereo Madness</div>
+                            <div class="level-difficulty" id="level-difficulty">
+                                <span class="difficulty-face easy"></span>
+                                <span class="difficulty-text">Easy</span>
+                            </div>
+                            <div class="level-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="level-progress"></div>
+                                </div>
+                                <span class="progress-text" id="progress-text">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-arrow right-arrow" id="level-next">❯</button>
+            </div>
+            <div class="level-actions">
+                <button class="gd-button normal-btn" id="normal-mode-btn">
+                    <div class="mode-icon normal-icon"></div>
+                    <span>NORMAL</span>
+                </button>
+                <button class="gd-button practice-btn" id="practice-mode-btn">
+                    <div class="mode-icon practice-icon"></div>
+                    <span>PRACTICE</span>
+                </button>
+            </div>
+            <div class="level-stars">
+                <span class="star-icon">★</span>
+                <span class="star-count" id="star-count">0</span>
+            </div>
+        </div>
+
+        <!-- Icon Customization -->
+        <div id="icon-kit" class="screen">
+            <div class="screen-header">
+                <button class="back-button" id="icon-back-btn">
+                    <span class="arrow">←</span>
+                </button>
+                <h1 class="screen-title">ICON KIT</h1>
+            </div>
+            <div class="icon-preview">
+                <canvas id="icon-preview-canvas" width="120" height="120"></canvas>
+            </div>
+            <div class="color-section">
+                <h3>PRIMARY COLOR</h3>
+                <div class="color-grid" id="primary-colors"></div>
+            </div>
+            <div class="color-section">
+                <h3>SECONDARY COLOR</h3>
+                <div class="color-grid" id="secondary-colors"></div>
+            </div>
+            <div class="icon-tabs">
+                <button class="icon-tab active" data-type="cube">
+                    <div class="tab-icon cube-tab-icon"></div>
+                </button>
+                <button class="icon-tab" data-type="ship">
+                    <div class="tab-icon ship-tab-icon"></div>
+                </button>
+                <button class="icon-tab" data-type="ball">
+                    <div class="tab-icon ball-tab-icon"></div>
+                </button>
+                <button class="icon-tab" data-type="ufo">
+                    <div class="tab-icon ufo-tab-icon"></div>
+                </button>
+                <button class="icon-tab" data-type="wave">
+                    <div class="tab-icon wave-tab-icon"></div>
+                </button>
+            </div>
+            <div class="icon-grid" id="icon-grid"></div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settings" class="screen">
+            <div class="screen-header">
+                <button class="back-button" id="settings-back-btn">
+                    <span class="arrow">←</span>
+                </button>
+                <h1 class="screen-title">SETTINGS</h1>
+            </div>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <span class="setting-label">Music</span>
+                    <div class="slider-container">
+                        <input type="range" class="gd-slider" id="music-volume" min="0" max="100" value="100">
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">SFX</span>
+                    <div class="slider-container">
+                        <input type="range" class="gd-slider" id="sfx-volume" min="0" max="100" value="100">
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Show Progress Bar</span>
+                    <button class="toggle-button active" id="progress-toggle">
+                        <span class="toggle-text">ON</span>
+                    </button>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Auto Retry</span>
+                    <button class="toggle-button" id="auto-retry-toggle">
+                        <span class="toggle-text">OFF</span>
+                    </button>
+                </div>
+                <div class="setting-item">
+                    <span class="setting-label">Flip Controls</span>
+                    <button class="toggle-button" id="flip-controls-toggle">
+                        <span class="toggle-text">OFF</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <canvas id="game-canvas"></canvas>
+            <div class="game-ui">
+                <div class="progress-container" id="game-progress-container">
+                    <div class="game-progress-bar">
+                        <div class="game-progress-fill" id="game-progress-fill"></div>
+                    </div>
+                    <span class="game-progress-text" id="game-progress-text">0%</span>
+                </div>
+                <button class="pause-button" id="pause-btn">⏸</button>
+            </div>
+            <div class="practice-ui" id="practice-ui" style="display: none;">
+                <button class="practice-button checkpoint-btn" id="checkpoint-btn">
+                    <span>✓</span>
+                </button>
+                <button class="practice-button remove-checkpoint-btn" id="remove-checkpoint-btn">
+                    <span>✗</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="overlay">
+            <div class="pause-content">
+                <h2>PAUSED</h2>
+                <div class="pause-buttons">
+                    <button class="gd-button" id="resume-btn">
+                        <div class="button-icon resume-icon"></div>
+                    </button>
+                    <button class="gd-button" id="restart-btn">
+                        <div class="button-icon restart-icon"></div>
+                    </button>
+                    <button class="gd-button" id="quit-btn">
+                        <div class="button-icon quit-icon"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Death Screen -->
+        <div id="death-screen" class="overlay">
+            <div class="death-content">
+                <div class="attempt-text">Attempt <span id="attempt-count">1</span></div>
+                <div class="death-progress">
+                    <span id="death-progress-text">0%</span>
+                </div>
+                <div class="death-buttons">
+                    <button class="gd-button" id="death-restart-btn">
+                        <div class="button-icon restart-icon"></div>
+                    </button>
+                    <button class="gd-button" id="death-quit-btn">
+                        <div class="button-icon quit-icon"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Complete -->
+        <div id="complete-screen" class="overlay">
+            <div class="complete-content">
+                <h1 class="complete-title">LEVEL COMPLETE!</h1>
+                <div class="complete-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Attempts:</span>
+                        <span class="stat-value" id="complete-attempts">1</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Jumps:</span>
+                        <span class="stat-value" id="complete-jumps">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Time:</span>
+                        <span class="stat-value" id="complete-time">0:00</span>
+                    </div>
+                </div>
+                <div class="stars-earned">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <div class="complete-buttons">
+                    <button class="gd-button" id="complete-restart-btn">
+                        <div class="button-icon restart-icon"></div>
+                    </button>
+                    <button class="gd-button" id="complete-menu-btn">
+                        <div class="button-icon menu-icon"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/obstacles.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
