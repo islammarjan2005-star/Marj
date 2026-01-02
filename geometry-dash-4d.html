@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash 4D</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            perspective: 1000px;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #bg-canvas { z-index: 1; }
+        #game-canvas { z-index: 2; }
+        #fx-canvas { z-index: 3; pointer-events: none; }
+        #ui-canvas { z-index: 4; pointer-events: none; }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Main Menu */
+        #main-menu {
+            background: transparent;
+        }
+
+        .menu-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .title-3d {
+            text-align: center;
+            transform-style: preserve-3d;
+            animation: titleRotate 10s ease-in-out infinite;
+        }
+
+        @keyframes titleRotate {
+            0%, 100% { transform: rotateX(10deg) rotateY(-5deg); }
+            50% { transform: rotateX(-5deg) rotateY(5deg); }
+        }
+
+        .title-main {
+            font-size: 72px;
+            font-weight: 900;
+            background: linear-gradient(180deg, #00ffff, #ff00ff, #ffff00);
+            background-size: 100% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientFlow 3s ease infinite;
+            text-shadow: none;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8))
+                    drop-shadow(0 0 60px rgba(255, 0, 255, 0.6));
+            letter-spacing: 8px;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        .title-sub {
+            font-size: 120px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow:
+                0 0 20px #ff00ff,
+                0 0 40px #ff00ff,
+                0 0 80px #ff00ff,
+                0 5px 0 #880088,
+                0 10px 0 #440044;
+            letter-spacing: 15px;
+            animation: pulse4d 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse4d {
+            0%, 100% { transform: scale(1) translateZ(0); }
+            50% { transform: scale(1.02) translateZ(20px); }
+        }
+
+        .dimension-badge {
+            position: absolute;
+            top: -20px;
+            right: -60px;
+            background: linear-gradient(135deg, #ff0080, #7928ca, #00d4ff);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            animation: badgeGlow 1.5s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px rgba(255, 0, 128, 0.8);
+        }
+
+        @keyframes badgeGlow {
+            from { box-shadow: 0 0 30px rgba(255, 0, 128, 0.8); }
+            to { box-shadow: 0 0 50px rgba(0, 212, 255, 0.8); }
+        }
+
+        .menu-buttons-3d {
+            display: flex;
+            gap: 30px;
+            transform-style: preserve-3d;
+        }
+
+        .btn-3d {
+            position: relative;
+            padding: 20px 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-3d::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-3d:hover::before {
+            left: 100%;
+        }
+
+        .btn-3d:hover {
+            transform: translateZ(30px) scale(1.1);
+            box-shadow:
+                0 20px 40px rgba(0, 255, 255, 0.4),
+                0 0 60px rgba(255, 0, 255, 0.3);
+            border-color: #00ffff;
+        }
+
+        .btn-3d:active {
+            transform: translateZ(10px) scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(180deg, #00ff88, #00aa55);
+            border-color: #00ff88;
+            box-shadow:
+                0 10px 30px rgba(0, 255, 136, 0.4),
+                inset 0 2px 10px rgba(255,255,255,0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow:
+                0 20px 50px rgba(0, 255, 136, 0.6),
+                0 0 80px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Dimension selector */
+        .dimension-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .dim-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .dim-btn:hover, .dim-btn.active {
+            transform: scale(1.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+
+        .dim-btn.active {
+            background: linear-gradient(180deg, #00ffff, #0088ff);
+        }
+
+        /* Game UI */
+        .game-ui-3d {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .progress-3d {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 25px;
+            border: 2px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar-3d {
+            width: 200px;
+            height: 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill-3d {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00ffff, #ff00ff);
+            background-size: 200% 100%;
+            animation: progressGradient 2s linear infinite;
+            border-radius: 6px;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        @keyframes progressGradient {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        .progress-text-3d {
+            color: white;
+            font-size: 16px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .dimension-indicator {
+            padding: 10px 25px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 25px;
+            border: 2px solid;
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dim-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            animation: dimIconSpin 3s linear infinite;
+        }
+
+        @keyframes dimIconSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .pause-btn-3d {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .pause-btn-3d:hover {
+            transform: scale(1.1);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.5);
+        }
+
+        /* Overlays */
+        .overlay-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            backdrop-filter: blur(20px);
+        }
+
+        .overlay-3d.active {
+            display: flex;
+        }
+
+        .overlay-content-3d {
+            text-align: center;
+            transform-style: preserve-3d;
+            animation: overlayAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes overlayAppear {
+            from { transform: scale(0.5) rotateX(30deg); opacity: 0; }
+            to { transform: scale(1) rotateX(0deg); opacity: 1; }
+        }
+
+        .overlay-title {
+            font-size: 64px;
+            font-weight: 900;
+            margin-bottom: 30px;
+            background: linear-gradient(180deg, #fff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8));
+        }
+
+        .overlay-stats {
+            margin: 30px 0;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 18px;
+            color: #888;
+        }
+
+        .stat-row span {
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .overlay-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .stars-3d {
+            font-size: 60px;
+            margin: 20px 0;
+        }
+
+        .stars-3d .star {
+            display: inline-block;
+            color: #ffdd00;
+            text-shadow: 0 0 30px #ffdd00;
+            animation: star3dPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+        }
+
+        .stars-3d .star:nth-child(1) { animation-delay: 0.2s; }
+        .stars-3d .star:nth-child(2) { animation-delay: 0.4s; }
+        .stars-3d .star:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes star3dPop {
+            from { transform: scale(0) rotateY(180deg); opacity: 0; }
+            to { transform: scale(1) rotateY(0deg); opacity: 1; }
+        }
+
+        /* Death effect */
+        .death-percentage {
+            font-size: 80px;
+            font-weight: 900;
+            color: #ff3366;
+            text-shadow: 0 0 50px #ff3366;
+            animation: deathPulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes deathPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Loading */
+        .loading-3d {
+            position: relative;
+        }
+
+        .loading-cube {
+            width: 80px;
+            height: 80px;
+            margin: 30px auto;
+            transform-style: preserve-3d;
+            animation: cubeRotate 2s linear infinite;
+        }
+
+        @keyframes cubeRotate {
+            from { transform: rotateX(0) rotateY(0); }
+            to { transform: rotateX(360deg) rotateY(360deg); }
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            border: 2px solid white;
+            opacity: 0.8;
+        }
+
+        .cube-face:nth-child(1) { transform: translateZ(40px); }
+        .cube-face:nth-child(2) { transform: rotateY(180deg) translateZ(40px); }
+        .cube-face:nth-child(3) { transform: rotateY(90deg) translateZ(40px); }
+        .cube-face:nth-child(4) { transform: rotateY(-90deg) translateZ(40px); }
+        .cube-face:nth-child(5) { transform: rotateX(90deg) translateZ(40px); }
+        .cube-face:nth-child(6) { transform: rotateX(-90deg) translateZ(40px); }
+
+        .loading-text-3d {
+            color: white;
+            font-size: 18px;
+            margin-top: 20px;
+            animation: loadingPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading-bar-3d {
+            width: 300px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+
+        .loading-fill-3d {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="bg-canvas"></canvas>
+        <canvas id="game-canvas"></canvas>
+        <canvas id="fx-canvas"></canvas>
+        <canvas id="ui-canvas"></canvas>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-3d">
+                <div class="loading-cube">
+                    <div class="cube-face"></div>
+                    <div class="cube-face"></div>
+                    <div class="cube-face"></div>
+                    <div class="cube-face"></div>
+                    <div class="cube-face"></div>
+                    <div class="cube-face"></div>
+                </div>
+                <div class="title-3d" style="margin-bottom: 20px;">
+                    <div class="title-main">GEOMETRY DASH</div>
+                    <div class="title-sub" style="font-size: 48px;">4D</div>
+                </div>
+                <div class="loading-bar-3d">
+                    <div class="loading-fill-3d" id="loading-fill"></div>
+                </div>
+                <div class="loading-text-3d">Initializing Dimensional Matrix...</div>
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen">
+            <div class="menu-content">
+                <div class="title-3d">
+                    <div class="title-main">GEOMETRY DASH</div>
+                    <div class="title-sub" style="position: relative;">
+                        4D
+                        <span class="dimension-badge">REVOLUTIONARY</span>
+                    </div>
+                </div>
+                <div class="menu-buttons-3d">
+                    <button class="btn-3d btn-primary" onclick="startGame()">
+                        ▶ ENTER DIMENSION
+                    </button>
+                </div>
+                <div class="dimension-selector">
+                    <button class="dim-btn active" data-dim="3" onclick="selectDimension(3)">3D</button>
+                    <button class="dim-btn" data-dim="4" onclick="selectDimension(4)">4D</button>
+                    <button class="dim-btn" data-dim="5" onclick="selectDimension(5)">5D</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-ui-3d">
+                <div class="progress-3d">
+                    <div class="progress-bar-3d">
+                        <div class="progress-fill-3d" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text-3d" id="progress-text">0%</span>
+                </div>
+                <div class="dimension-indicator" id="dim-indicator">
+                    <div class="dim-icon" id="dim-icon"></div>
+                    <span id="dim-text">DIMENSION 3</span>
+                </div>
+                <button class="pause-btn-3d" onclick="togglePause()">⏸</button>
+            </div>
+        </div>
+
+        <!-- Pause Overlay -->
+        <div id="pause-overlay" class="overlay-3d">
+            <div class="overlay-content-3d">
+                <div class="overlay-title">PAUSED</div>
+                <div class="overlay-buttons">
+                    <button class="btn-3d btn-primary" onclick="resumeGame()">▶ RESUME</button>
+                    <button class="btn-3d" onclick="restartGame()">↻ RESTART</button>
+                    <button class="btn-3d" onclick="quitToMenu()">✕ QUIT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Death Overlay -->
+        <div id="death-overlay" class="overlay-3d">
+            <div class="overlay-content-3d">
+                <div style="color: #888; font-size: 24px; margin-bottom: 10px;">
+                    Attempt <span id="attempt-num" style="color: white;">1</span>
+                </div>
+                <div class="death-percentage" id="death-percent">0%</div>
+                <div class="overlay-buttons">
+                    <button class="btn-3d btn-primary" onclick="restartGame()">↻ RETRY</button>
+                    <button class="btn-3d" onclick="quitToMenu()">✕ QUIT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complete Overlay -->
+        <div id="complete-overlay" class="overlay-3d">
+            <div class="overlay-content-3d">
+                <div class="overlay-title">DIMENSION CLEARED!</div>
+                <div class="stars-3d">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                </div>
+                <div class="overlay-stats">
+                    <div class="stat-row">Attempts: <span id="stat-attempts">1</span></div>
+                    <div class="stat-row">Jumps: <span id="stat-jumps">0</span></div>
+                    <div class="stat-row">Time: <span id="stat-time">0:00</span></div>
+                    <div class="stat-row">Dimension: <span id="stat-dim">3D</span></div>
+                </div>
+                <div class="overlay-buttons">
+                    <button class="btn-3d btn-primary" onclick="restartGame()">↻ REPLAY</button>
+                    <button class="btn-3d" onclick="quitToMenu()">☰ MENU</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// =====================================================
+// GEOMETRY DASH 4D - REVOLUTIONARY 3D/4D ENGINE
+// =====================================================
+
+// Canvas setup
+const bgCanvas = document.getElementById('bg-canvas');
+const gameCanvas = document.getElementById('game-canvas');
+const fxCanvas = document.getElementById('fx-canvas');
+const bgCtx = bgCanvas.getContext('2d');
+const ctx = gameCanvas.getContext('2d');
+const fxCtx = fxCanvas.getContext('2d');
+
+let width, height;
+
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    [bgCanvas, gameCanvas, fxCanvas].forEach(c => {
+        c.width = width;
+        c.height = height;
+    });
+}
+resize();
+window.addEventListener('resize', resize);
+
+// =====================================================
+// 3D/4D MATH ENGINE
+// =====================================================
+
+class Vector3 {
+    constructor(x = 0, y = 0, z = 0) {
+        this.x = x; this.y = y; this.z = z;
+    }
+    add(v) { return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z); }
+    sub(v) { return new Vector3(this.x - v.x, this.y - v.y, this.z - v.z); }
+    scale(s) { return new Vector3(this.x * s, this.y * s, this.z * s); }
+    rotateX(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector3(this.x, this.y * c - this.z * s, this.y * s + this.z * c);
+    }
+    rotateY(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector3(this.x * c + this.z * s, this.y, -this.x * s + this.z * c);
+    }
+    rotateZ(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector3(this.x * c - this.y * s, this.x * s + this.y * c, this.z);
+    }
+}
+
+class Vector4 extends Vector3 {
+    constructor(x = 0, y = 0, z = 0, w = 0) {
+        super(x, y, z);
+        this.w = w;
+    }
+    rotateXW(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector4(this.x * c - this.w * s, this.y, this.z, this.x * s + this.w * c);
+    }
+    rotateYW(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector4(this.x, this.y * c - this.w * s, this.z, this.y * s + this.w * c);
+    }
+    rotateZW(a) {
+        const c = Math.cos(a), s = Math.sin(a);
+        return new Vector4(this.x, this.y, this.z * c - this.w * s, this.z * s + this.w * c);
+    }
+    projectTo3D(distance = 2) {
+        const w = 1 / (distance - this.w);
+        return new Vector3(this.x * w, this.y * w, this.z * w);
+    }
+}
+
+// Camera
+const camera = {
+    position: new Vector3(0, 0, -500),
+    rotation: new Vector3(0, 0, 0),
+    fov: 500,
+    targetRotation: new Vector3(0, 0, 0),
+    shake: 0,
+
+    project(point) {
+        let p = point.sub(this.position);
+        p = p.rotateX(this.rotation.x).rotateY(this.rotation.y).rotateZ(this.rotation.z);
+
+        if (p.z <= 0) return null;
+
+        const scale = this.fov / p.z;
+        return {
+            x: width / 2 + p.x * scale + (Math.random() - 0.5) * this.shake,
+            y: height / 2 + p.y * scale + (Math.random() - 0.5) * this.shake,
+            scale: scale,
+            z: p.z
+        };
+    },
+
+    update() {
+        this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.05;
+        this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.05;
+        this.rotation.z += (this.targetRotation.z - this.rotation.z) * 0.05;
+        this.shake *= 0.9;
+    }
+};
+
+// =====================================================
+// GAME STATE
+// =====================================================
+
+let gameState = 'loading';
+let currentDimension = 3;
+let gameSpeed = 10;
+let cameraX = 0;
+let groundY = 200;
+let attempts = 0;
+let jumpCount = 0;
+let startTime = 0;
+let levelLength = 8000;
+
+// Player
+const player = {
+    pos: new Vector3(0, 0, 0),
+    vel: new Vector3(0, 0, 0),
+    rotation: new Vector3(0, 0, 0),
+    rotationVel: new Vector3(0, 0, 0),
+    size: 40,
+    isOnGround: true,
+    isDead: false,
+
+    // 4D properties
+    pos4D: new Vector4(0, 0, 0, 0),
+    rotation4D: 0,
+    dimensionPhase: 0,
+
+    // Visual
+    primaryColor: '#00ff88',
+    secondaryColor: '#00ffff',
+    glowColor: '#00ff88',
+    trail: []
+};
+
+// Obstacles
+let obstacles = [];
+let particles3D = [];
+let dimensionParticles = [];
+
+// Input
+let isHolding = false;
+let canJump = true;
+
+// =====================================================
+// 3D CUBE RENDERING
+// =====================================================
+
+function getCubeVertices(size) {
+    const s = size / 2;
+    return [
+        new Vector3(-s, -s, -s), new Vector3(s, -s, -s),
+        new Vector3(s, s, -s), new Vector3(-s, s, -s),
+        new Vector3(-s, -s, s), new Vector3(s, -s, s),
+        new Vector3(s, s, s), new Vector3(-s, s, s)
+    ];
+}
+
+function getTesseractVertices(size) {
+    const s = size / 2;
+    const vertices = [];
+    for (let w = -1; w <= 1; w += 2) {
+        for (let z = -1; z <= 1; z += 2) {
+            for (let y = -1; y <= 1; y += 2) {
+                for (let x = -1; x <= 1; x += 2) {
+                    vertices.push(new Vector4(x * s, y * s, z * s, w * s));
+                }
+            }
+        }
+    }
+    return vertices;
+}
+
+const cubeEdges = [
+    [0,1],[1,2],[2,3],[3,0], // front
+    [4,5],[5,6],[6,7],[7,4], // back
+    [0,4],[1,5],[2,6],[3,7]  // connections
+];
+
+const tesseractEdges = [];
+// Generate tesseract edges (connect vertices that differ by one coordinate)
+for (let i = 0; i < 16; i++) {
+    for (let j = i + 1; j < 16; j++) {
+        const diff = (i ^ j);
+        if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
+            tesseractEdges.push([i, j]);
+        }
+    }
+}
+
+function drawCube3D(position, size, rotX, rotY, rotZ, color1, color2, glowColor) {
+    let vertices = getCubeVertices(size);
+
+    // Apply rotation
+    vertices = vertices.map(v =>
+        v.rotateX(rotX).rotateY(rotY).rotateZ(rotZ).add(position)
+    );
+
+    // Project vertices
+    const projected = vertices.map(v => camera.project(v)).filter(p => p !== null);
+    if (projected.length < 8) return;
+
+    // Sort faces by depth
+    const faces = [
+        { indices: [0,1,2,3], z: (vertices[0].z + vertices[1].z + vertices[2].z + vertices[3].z) / 4 },
+        { indices: [4,5,6,7], z: (vertices[4].z + vertices[5].z + vertices[6].z + vertices[7].z) / 4 },
+        { indices: [0,1,5,4], z: (vertices[0].z + vertices[1].z + vertices[5].z + vertices[4].z) / 4 },
+        { indices: [2,3,7,6], z: (vertices[2].z + vertices[3].z + vertices[7].z + vertices[6].z) / 4 },
+        { indices: [0,3,7,4], z: (vertices[0].z + vertices[3].z + vertices[7].z + vertices[4].z) / 4 },
+        { indices: [1,2,6,5], z: (vertices[1].z + vertices[2].z + vertices[6].z + vertices[5].z) / 4 }
+    ];
+
+    faces.sort((a, b) => b.z - a.z);
+
+    // Draw glow
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 30;
+
+    // Draw faces
+    faces.forEach((face, faceIdx) => {
+        const pts = face.indices.map(i => projected[i]);
+        if (pts.some(p => !p)) return;
+
+        const brightness = 0.3 + (1 - face.z / 1000) * 0.7;
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+
+        // Gradient fill
+        const gradient = ctx.createLinearGradient(pts[0].x, pts[0].y, pts[2].x, pts[2].y);
+        gradient.addColorStop(0, adjustBrightness(color1, brightness));
+        gradient.addColorStop(1, adjustBrightness(color2, brightness * 0.7));
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+
+    ctx.shadowBlur = 0;
+}
+
+function drawTesseract4D(position4D, size, rotation4D, color1, color2) {
+    let vertices = getTesseractVertices(size);
+
+    // Apply 4D rotation
+    vertices = vertices.map(v => v.rotateXW(rotation4D).rotateZW(rotation4D * 0.7));
+
+    // Project to 3D then to 2D
+    const projected3D = vertices.map(v => v.projectTo3D(3));
+    const projected2D = projected3D.map(v => {
+        const worldPos = v.scale(size).add(new Vector3(position4D.x, position4D.y, position4D.z));
+        return camera.project(worldPos);
+    });
+
+    // Draw edges
+    ctx.shadowColor = color1;
+    ctx.shadowBlur = 20;
+
+    tesseractEdges.forEach(([i, j]) => {
+        const p1 = projected2D[i];
+        const p2 = projected2D[j];
+        if (!p1 || !p2) return;
+
+        // Color based on W coordinate
+        const w1 = vertices[i].w;
+        const w2 = vertices[j].w;
+        const avgW = (w1 + w2) / 2;
+        const hue = 180 + avgW * 60;
+
+        ctx.strokeStyle = `hsla(${hue}, 100%, 60%, ${0.5 + avgW * 0.3})`;
+        ctx.lineWidth = 2 + avgW;
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+    });
+
+    // Draw vertices
+    projected2D.forEach((p, i) => {
+        if (!p) return;
+        const w = vertices[i].w;
+        const radius = 4 + w * 2;
+        const hue = 180 + w * 60;
+
+        ctx.fillStyle = `hsla(${hue}, 100%, 70%, 0.8)`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    ctx.shadowBlur = 0;
+}
+
+// =====================================================
+// OBSTACLE GENERATION
+// =====================================================
+
+function generateObstacles() {
+    obstacles = [];
+    let x = 600;
+
+    while (x < levelLength - 400) {
+        const type = Math.random();
+
+        if (type < 0.3) {
+            // 3D Spike
+            const count = 1 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < count; i++) {
+                obstacles.push({
+                    type: 'spike3d',
+                    pos: new Vector3(x + i * 50, groundY - 25, 0),
+                    size: 50,
+                    rotation: 0
+                });
+            }
+            x += count * 50 + 200 + Math.random() * 150;
+        } else if (type < 0.55) {
+            // 3D Block
+            const stackHeight = 1 + Math.floor(Math.random() * 3);
+            const stackWidth = 1 + Math.floor(Math.random() * 2);
+            for (let h = 0; h < stackHeight; h++) {
+                for (let w = 0; w < stackWidth; w++) {
+                    obstacles.push({
+                        type: 'block3d',
+                        pos: new Vector3(x + w * 50, groundY - 25 - h * 50, 0),
+                        size: 50,
+                        rotation: 0
+                    });
+                }
+            }
+            // Maybe add spike on top
+            if (Math.random() < 0.4) {
+                obstacles.push({
+                    type: 'spike3d',
+                    pos: new Vector3(x + 25, groundY - 25 - stackHeight * 50, 0),
+                    size: 50,
+                    rotation: 0
+                });
+            }
+            x += stackWidth * 50 + 180 + Math.random() * 100;
+        } else if (type < 0.7) {
+            // Jump Orb
+            obstacles.push({
+                type: 'orb3d',
+                pos: new Vector3(x, groundY - 120, 0),
+                size: 40,
+                triggered: false,
+                pulsePhase: Math.random() * Math.PI * 2
+            });
+            // Spikes below
+            obstacles.push({
+                type: 'spike3d',
+                pos: new Vector3(x - 30, groundY - 25, 0),
+                size: 50
+            });
+            obstacles.push({
+                type: 'spike3d',
+                pos: new Vector3(x + 30, groundY - 25, 0),
+                size: 50
+            });
+            x += 250;
+        } else if (type < 0.85) {
+            // Dimension portal
+            obstacles.push({
+                type: 'portal4d',
+                pos: new Vector3(x, groundY - 100, 0),
+                size: 80,
+                targetDim: currentDimension === 3 ? 4 : 3,
+                rotation: 0
+            });
+            x += 300;
+        } else {
+            // Rotating saw
+            obstacles.push({
+                type: 'saw3d',
+                pos: new Vector3(x, groundY - 80, 0),
+                size: 70,
+                rotation: 0,
+                rotationSpeed: 0.1
+            });
+            x += 200;
+        }
+    }
+
+    // End portal
+    obstacles.push({
+        type: 'end',
+        pos: new Vector3(levelLength - 100, groundY - 100, 0),
+        size: 100
+    });
+}
+
+// =====================================================
+// RENDERING
+// =====================================================
+
+function drawBackground() {
+    // Gradient sky
+    const gradient = bgCtx.createLinearGradient(0, 0, 0, height);
+    const hue = (cameraX * 0.01) % 360;
+    gradient.addColorStop(0, `hsl(${hue}, 80%, 15%)`);
+    gradient.addColorStop(0.5, `hsl(${(hue + 30) % 360}, 70%, 10%)`);
+    gradient.addColorStop(1, `hsl(${(hue + 60) % 360}, 60%, 5%)`);
+    bgCtx.fillStyle = gradient;
+    bgCtx.fillRect(0, 0, width, height);
+
+    // 3D Grid
+    bgCtx.strokeStyle = 'rgba(255,255,255,0.05)';
+    bgCtx.lineWidth = 1;
+
+    // Horizontal lines with perspective
+    for (let i = 0; i < 20; i++) {
+        const y = height * 0.3 + i * 30;
+        const perspective = 1 - (i / 30);
+        bgCtx.globalAlpha = perspective * 0.3;
+        bgCtx.beginPath();
+        bgCtx.moveTo(0, y);
+        bgCtx.lineTo(width, y);
+        bgCtx.stroke();
+    }
+
+    // Vertical lines
+    bgCtx.globalAlpha = 0.1;
+    for (let i = 0; i < 30; i++) {
+        const x = ((i * 80 - cameraX * 0.2) % (width + 200)) - 100;
+        bgCtx.beginPath();
+        bgCtx.moveTo(x, 0);
+        bgCtx.lineTo(x, height);
+        bgCtx.stroke();
+    }
+
+    bgCtx.globalAlpha = 1;
+
+    // Stars/particles in background
+    dimensionParticles.forEach(p => {
+        p.x -= p.speed;
+        if (p.x < -10) p.x = width + 10;
+
+        const pulse = 0.5 + Math.sin(Date.now() * 0.003 + p.phase) * 0.5;
+        bgCtx.fillStyle = `hsla(${p.hue}, 100%, 70%, ${p.alpha * pulse})`;
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        bgCtx.fill();
+    });
+}
+
+function drawGround() {
+    const blockSize = 50;
+    const startX = Math.floor(cameraX / blockSize) * blockSize;
+
+    // Draw 3D ground blocks
+    for (let row = 0; row < 3; row++) {
+        for (let col = -2; col <= Math.ceil(width / blockSize) + 2; col++) {
+            const worldX = startX + col * blockSize;
+            const worldY = groundY + row * blockSize;
+            const pos = new Vector3(worldX - cameraX + width / 2, worldY - height / 2, 200 + row * 30);
+
+            const isLight = (Math.floor(worldX / blockSize) + row) % 2 === 0;
+            const baseHue = (cameraX * 0.02) % 360;
+            const color1 = `hsl(${baseHue + 240}, 60%, ${isLight ? 25 : 20}%)`;
+            const color2 = `hsl(${baseHue + 260}, 50%, ${isLight ? 20 : 15}%)`;
+
+            drawCube3D(pos, blockSize * 0.9, 0, 0, 0, color1, color2, 'transparent');
+        }
+    }
+
+    // Ground line glow
+    ctx.shadowColor = `hsl(${(cameraX * 0.02) % 360 + 180}, 100%, 50%)`;
+    ctx.shadowBlur = 20;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2 + groundY - height / 2);
+    ctx.lineTo(width, height / 2 + groundY - height / 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+}
+
+function drawObstacles() {
+    obstacles.forEach(obs => {
+        const screenX = obs.pos.x - cameraX;
+        if (screenX < -200 || screenX > width + 200) return;
+
+        const pos3D = new Vector3(screenX - width / 2 + width / 2, obs.pos.y - height / 2, 200);
+
+        switch (obs.type) {
+            case 'spike3d':
+                drawSpike3D(pos3D, obs.size);
+                break;
+            case 'block3d':
+                drawCube3D(pos3D, obs.size * 0.9, 0, 0, 0, '#4a3a6a', '#3a2a5a', '#6644aa');
+                break;
+            case 'orb3d':
+                drawOrb3D(pos3D, obs.size, obs.triggered, obs.pulsePhase);
+                break;
+            case 'portal4d':
+                drawPortal4D(pos3D, obs.size, obs.targetDim, obs.rotation);
+                obs.rotation += 0.02;
+                break;
+            case 'saw3d':
+                drawSaw3D(pos3D, obs.size, obs.rotation);
+                obs.rotation += obs.rotationSpeed;
+                break;
+            case 'end':
+                drawEndPortal(pos3D, obs.size);
+                break;
+        }
+    });
+}
+
+function drawSpike3D(pos, size) {
+    // Draw as a 3D pyramid
+    const h = size;
+    const base = size * 0.8;
+
+    const apex = pos.add(new Vector3(0, -h, 0));
+    const corners = [
+        pos.add(new Vector3(-base/2, 0, -base/2)),
+        pos.add(new Vector3(base/2, 0, -base/2)),
+        pos.add(new Vector3(base/2, 0, base/2)),
+        pos.add(new Vector3(-base/2, 0, base/2))
+    ];
+
+    const projApex = camera.project(apex);
+    const projCorners = corners.map(c => camera.project(c));
+
+    if (!projApex || projCorners.some(p => !p)) return;
+
+    ctx.shadowColor = '#ff0066';
+    ctx.shadowBlur = 15;
+
+    // Draw faces
+    for (let i = 0; i < 4; i++) {
+        const next = (i + 1) % 4;
+        const brightness = 0.5 + (i / 4) * 0.5;
+
+        ctx.beginPath();
+        ctx.moveTo(projApex.x, projApex.y);
+        ctx.lineTo(projCorners[i].x, projCorners[i].y);
+        ctx.lineTo(projCorners[next].x, projCorners[next].y);
+        ctx.closePath();
+
+        ctx.fillStyle = `rgba(${Math.floor(30 * brightness)}, ${Math.floor(20 * brightness)}, ${Math.floor(50 * brightness)}, 0.9)`;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    ctx.shadowBlur = 0;
+}
+
+function drawOrb3D(pos, size, triggered, phase) {
+    const projected = camera.project(pos);
+    if (!projected) return;
+
+    const pulse = 1 + Math.sin(Date.now() * 0.005 + phase) * 0.15;
+    const radius = (size / 2) * projected.scale * pulse;
+
+    // Outer glow
+    const gradient = ctx.createRadialGradient(projected.x, projected.y, 0, projected.x, projected.y, radius * 2);
+    gradient.addColorStop(0, triggered ? 'rgba(100,100,0,0.5)' : 'rgba(255,255,0,0.5)');
+    gradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(projected.x, projected.y, radius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Main orb
+    ctx.shadowColor = triggered ? '#666600' : '#ffff00';
+    ctx.shadowBlur = 30;
+
+    const orbGradient = ctx.createRadialGradient(
+        projected.x - radius * 0.3, projected.y - radius * 0.3, 0,
+        projected.x, projected.y, radius
+    );
+    orbGradient.addColorStop(0, triggered ? '#aaaa00' : '#ffff88');
+    orbGradient.addColorStop(1, triggered ? '#666600' : '#ffaa00');
+
+    ctx.fillStyle = orbGradient;
+    ctx.beginPath();
+    ctx.arc(projected.x, projected.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+}
+
+function drawPortal4D(pos, size, targetDim, rotation) {
+    const projected = camera.project(pos);
+    if (!projected) return;
+
+    const baseRadius = (size / 2) * projected.scale;
+
+    // Swirling effect
+    ctx.save();
+    ctx.translate(projected.x, projected.y);
+
+    // Multiple rotating rings
+    for (let ring = 0; ring < 5; ring++) {
+        const ringRadius = baseRadius * (0.3 + ring * 0.2);
+        const ringRotation = rotation * (1 + ring * 0.5) * (ring % 2 === 0 ? 1 : -1);
+        const hue = targetDim === 4 ? 280 + ring * 20 : 180 + ring * 20;
+
+        ctx.strokeStyle = `hsla(${hue}, 100%, 60%, ${0.8 - ring * 0.1})`;
+        ctx.lineWidth = 4 - ring * 0.5;
+        ctx.setLineDash([10, 10]);
+        ctx.lineDashOffset = ringRotation * 50;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+
+    // Center vortex
+    const vortexGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, baseRadius);
+    vortexGradient.addColorStop(0, targetDim === 4 ? 'rgba(150, 0, 255, 0.8)' : 'rgba(0, 255, 200, 0.8)');
+    vortexGradient.addColorStop(0.5, targetDim === 4 ? 'rgba(100, 0, 200, 0.4)' : 'rgba(0, 200, 150, 0.4)');
+    vortexGradient.addColorStop(1, 'transparent');
+
+    ctx.fillStyle = vortexGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, baseRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dimension text
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(baseRadius * 0.5)}px Orbitron`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${targetDim}D`, 0, 0);
+
+    ctx.restore();
+}
+
+function drawSaw3D(pos, size, rotation) {
+    const projected = camera.project(pos);
+    if (!projected) return;
+
+    const radius = (size / 2) * projected.scale;
+
+    ctx.save();
+    ctx.translate(projected.x, projected.y);
+    ctx.rotate(rotation);
+
+    // Saw blade
+    ctx.shadowColor = '#ff3366';
+    ctx.shadowBlur = 20;
+
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Teeth
+    const teeth = 12;
+    ctx.fillStyle = '#222';
+    for (let i = 0; i < teeth; i++) {
+        const angle = (Math.PI * 2 / teeth) * i;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(angle) * radius * 0.6, Math.sin(angle) * radius * 0.6);
+        ctx.lineTo(Math.cos(angle - 0.15) * radius * 1.1, Math.sin(angle - 0.15) * radius * 1.1);
+        ctx.lineTo(Math.cos(angle + 0.15) * radius * 1.1, Math.sin(angle + 0.15) * radius * 1.1);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Center
+    ctx.fillStyle = '#ff3366';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+    ctx.shadowBlur = 0;
+}
+
+function drawEndPortal(pos, size) {
+    const projected = camera.project(pos);
+    if (!projected) return;
+
+    const radius = size * projected.scale;
+
+    // Glowing end portal
+    for (let i = 5; i >= 0; i--) {
+        const r = radius * (1 + i * 0.2);
+        const alpha = 0.3 - i * 0.04;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(projected.x, projected.y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Checkered pattern
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(projected.x, projected.y, radius, 0, Math.PI * 2);
+    ctx.clip();
+
+    const squareSize = 15;
+    for (let row = -10; row < 10; row++) {
+        for (let col = -10; col < 10; col++) {
+            if ((row + col) % 2 === 0) {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(
+                    projected.x + col * squareSize - radius,
+                    projected.y + row * squareSize - radius,
+                    squareSize, squareSize
+                );
+            }
+        }
+    }
+    ctx.restore();
+}
+
+function drawPlayer() {
+    if (player.isDead) {
+        drawDeathParticles();
+        return;
+    }
+
+    const screenX = player.pos.x - cameraX + width / 2;
+    const pos3D = new Vector3(screenX - width / 2, player.pos.y - height / 2, 200);
+
+    // Trail
+    player.trail.forEach((t, i) => {
+        const trailPos = new Vector3(t.x - cameraX + width / 2 - width / 2, t.y - height / 2, 200 + i * 10);
+        const proj = camera.project(trailPos);
+        if (proj) {
+            const alpha = t.alpha * 0.5;
+            const gradient = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, 25 * proj.scale);
+            gradient.addColorStop(0, `rgba(0, 255, 255, ${alpha})`);
+            gradient.addColorStop(1, 'transparent');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, 25 * proj.scale, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    // Draw player based on dimension
+    if (currentDimension >= 4) {
+        // 4D Tesseract player
+        player.rotation4D += 0.03;
+        drawTesseract4D(
+            new Vector4(pos3D.x, pos3D.y, pos3D.z, Math.sin(player.rotation4D) * 30),
+            player.size * 0.6,
+            player.rotation4D,
+            player.primaryColor,
+            player.secondaryColor
+        );
+    } else {
+        // 3D Cube player
+        drawCube3D(
+            pos3D,
+            player.size,
+            player.rotation.x,
+            player.rotation.y,
+            player.rotation.z,
+            player.primaryColor,
+            player.secondaryColor,
+            player.glowColor
+        );
+    }
+
+    // Eye (always visible)
+    const projected = camera.project(pos3D);
+    if (projected) {
+        const eyeOffset = player.size * 0.15 * projected.scale;
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(projected.x + eyeOffset, projected.y - eyeOffset, player.size * 0.18 * projected.scale, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(projected.x + eyeOffset + 2, projected.y - eyeOffset, player.size * 0.1 * projected.scale, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function drawDeathParticles() {
+    particles3D.forEach(p => {
+        p.pos = p.pos.add(p.vel);
+        p.vel.y += 0.3;
+        p.rotation += p.rotSpeed;
+        p.alpha -= 0.015;
+
+        if (p.alpha > 0) {
+            const proj = camera.project(p.pos);
+            if (proj) {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.translate(proj.x, proj.y);
+                ctx.rotate(p.rotation);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size/2 * proj.scale, -p.size/2 * proj.scale, p.size * proj.scale, p.size * proj.scale);
+                ctx.restore();
+            }
+        }
+    });
+}
+
+function drawFX() {
+    fxCtx.clearRect(0, 0, width, height);
+
+    // Vignette
+    const vignette = fxCtx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width * 0.7);
+    vignette.addColorStop(0, 'transparent');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
+    fxCtx.fillStyle = vignette;
+    fxCtx.fillRect(0, 0, width, height);
+
+    // Scanlines
+    fxCtx.fillStyle = 'rgba(0,0,0,0.03)';
+    for (let y = 0; y < height; y += 4) {
+        fxCtx.fillRect(0, y, width, 2);
+    }
+
+    // Chromatic aberration on edges (subtle)
+    if (camera.shake > 1) {
+        fxCtx.globalCompositeOperation = 'screen';
+        fxCtx.globalAlpha = 0.1;
+        fxCtx.drawImage(gameCanvas, -2, 0);
+        fxCtx.drawImage(gameCanvas, 2, 0);
+        fxCtx.globalAlpha = 1;
+        fxCtx.globalCompositeOperation = 'source-over';
+    }
+}
+
+// =====================================================
+// GAME LOGIC
+// =====================================================
+
+function update() {
+    if (gameState !== 'playing') return;
+
+    // Camera movement
+    cameraX += gameSpeed;
+    camera.update();
+
+    // Dynamic camera rotation based on player state
+    camera.targetRotation.x = player.vel.y * 0.001;
+    camera.targetRotation.z = Math.sin(cameraX * 0.002) * 0.02;
+
+    // Player position
+    player.pos.x = cameraX + 150;
+
+    // Gravity
+    player.vel.y += 0.9;
+    player.pos.y += player.vel.y;
+
+    // Ground collision
+    if (player.pos.y >= groundY - player.size / 2) {
+        player.pos.y = groundY - player.size / 2;
+        player.vel.y = 0;
+        player.isOnGround = true;
+
+        // Snap rotation
+        player.rotation.z = Math.round(player.rotation.z / (Math.PI / 2)) * (Math.PI / 2);
+        player.rotationVel.z = 0;
+    } else {
+        player.isOnGround = false;
+    }
+
+    // Jump
+    if (isHolding && player.isOnGround && canJump) {
+        player.vel.y = -16;
+        player.isOnGround = false;
+        canJump = false;
+        jumpCount++;
+        playSound('jump');
+    }
+    if (!isHolding) canJump = true;
+
+    // Rotation in air
+    if (!player.isOnGround) {
+        player.rotation.z += 0.15;
+        player.rotation.x = Math.sin(player.rotation.z) * 0.1;
+    }
+
+    // Update trail
+    player.trail.push({ x: player.pos.x, y: player.pos.y, alpha: 1 });
+    if (player.trail.length > 20) player.trail.shift();
+    player.trail.forEach(t => t.alpha -= 0.05);
+
+    // Dimension phase animation
+    player.dimensionPhase += 0.05;
+
+    // Check collisions
+    checkCollisions();
+
+    // Update progress
+    const progress = Math.floor((cameraX / levelLength) * 100);
+    document.getElementById('progress-fill').style.width = progress + '%';
+    document.getElementById('progress-text').textContent = progress + '%';
+
+    // Check completion
+    if (cameraX >= levelLength) {
+        completeLevel();
+    }
+}
+
+function checkCollisions() {
+    const playerBounds = {
+        left: player.pos.x - player.size / 2 + 8,
+        right: player.pos.x + player.size / 2 - 8,
+        top: player.pos.y - player.size / 2 + 8,
+        bottom: player.pos.y + player.size / 2 - 8
+    };
+
+    for (const obs of obstacles) {
+        const screenX = obs.pos.x;
+
+        // Skip far obstacles
+        if (Math.abs(screenX - player.pos.x) > 200) continue;
+
+        const obsBounds = {
+            left: obs.pos.x - obs.size / 2,
+            right: obs.pos.x + obs.size / 2,
+            top: obs.pos.y - obs.size / 2,
+            bottom: obs.pos.y + obs.size / 2
+        };
+
+        const hit = playerBounds.left < obsBounds.right &&
+                    playerBounds.right > obsBounds.left &&
+                    playerBounds.top < obsBounds.bottom &&
+                    playerBounds.bottom > obsBounds.top;
+
+        if (!hit) continue;
+
+        switch (obs.type) {
+            case 'spike3d':
+            case 'saw3d':
+                die();
+                return;
+
+            case 'block3d':
+                // Check if landing on top
+                if (player.vel.y > 0 && playerBounds.bottom > obsBounds.top && playerBounds.bottom < obsBounds.top + obs.size / 2) {
+                    player.pos.y = obsBounds.top - player.size / 2;
+                    player.vel.y = 0;
+                    player.isOnGround = true;
+                    player.rotation.z = Math.round(player.rotation.z / (Math.PI / 2)) * (Math.PI / 2);
+                } else if (playerBounds.right > obsBounds.left && playerBounds.left < obsBounds.left + 10) {
+                    die();
+                    return;
+                }
+                break;
+
+            case 'orb3d':
+                if (isHolding && !obs.triggered) {
+                    obs.triggered = true;
+                    player.vel.y = -15;
+                    jumpCount++;
+                    playSound('jump');
+                }
+                break;
+
+            case 'portal4d':
+                if (!obs.triggered) {
+                    obs.triggered = true;
+                    switchDimension(obs.targetDim);
+                }
+                break;
+
+            case 'end':
+                completeLevel();
+                return;
+        }
+    }
+}
+
+function die() {
+    player.isDead = true;
+    gameState = 'dead';
+    camera.shake = 20;
+    playSound('death');
+
+    // Create death particles
+    particles3D = [];
+    const screenX = player.pos.x - cameraX + width / 2;
+    const pos3D = new Vector3(screenX - width / 2, player.pos.y - height / 2, 200);
+
+    for (let i = 0; i < 30; i++) {
+        const angle = (Math.PI * 2 / 30) * i;
+        const speed = 5 + Math.random() * 10;
+        particles3D.push({
+            pos: pos3D.add(new Vector3(0, 0, 0)),
+            vel: new Vector3(Math.cos(angle) * speed, Math.sin(angle) * speed - 5, (Math.random() - 0.5) * 10),
+            size: 10 + Math.random() * 20,
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.3,
+            alpha: 1,
+            color: Math.random() > 0.5 ? player.primaryColor : player.secondaryColor
+        });
+    }
+
+    const progress = Math.floor((cameraX / levelLength) * 100);
+    document.getElementById('death-percent').textContent = progress + '%';
+    document.getElementById('attempt-num').textContent = attempts;
+
+    setTimeout(() => {
+        document.getElementById('death-overlay').classList.add('active');
+    }, 800);
+}
+
+function switchDimension(dim) {
+    currentDimension = dim;
+    camera.shake = 10;
+    playSound('dimension');
+
+    // Update UI
+    document.getElementById('dim-text').textContent = `DIMENSION ${dim}`;
+    const icon = document.getElementById('dim-icon');
+    icon.style.background = dim === 4 ? 'linear-gradient(135deg, #ff00ff, #00ffff)' : 'linear-gradient(135deg, #00ff88, #00ffff)';
+
+    // Visual flash
+    fxCtx.fillStyle = dim === 4 ? 'rgba(150, 0, 255, 0.3)' : 'rgba(0, 255, 200, 0.3)';
+    fxCtx.fillRect(0, 0, width, height);
+    setTimeout(() => fxCtx.clearRect(0, 0, width, height), 100);
+}
+
+function completeLevel() {
+    gameState = 'complete';
+    playSound('complete');
+
+    document.getElementById('stat-attempts').textContent = attempts;
+    document.getElementById('stat-jumps').textContent = jumpCount;
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById('stat-time').textContent = `${Math.floor(elapsed/60)}:${(elapsed%60).toString().padStart(2,'0')}`;
+    document.getElementById('stat-dim').textContent = `${currentDimension}D`;
+
+    document.getElementById('complete-overlay').classList.add('active');
+}
+
+// =====================================================
+// AUDIO
+// =====================================================
+
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    switch (type) {
+        case 'jump':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+            break;
+
+        case 'death':
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+            break;
+
+        case 'dimension':
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+            break;
+
+        case 'complete':
+            [523, 659, 784, 1047].forEach((freq, i) => {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.15);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.15 + 0.4);
+                o.start(audioCtx.currentTime + i * 0.15);
+                o.stop(audioCtx.currentTime + i * 0.15 + 0.4);
+            });
+            break;
+    }
+}
+
+// =====================================================
+// UI & CONTROLS
+// =====================================================
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.overlay-3d').forEach(o => o.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function selectDimension(dim) {
+    currentDimension = dim;
+    document.querySelectorAll('.dim-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-dim="${dim}"]`).classList.add('active');
+}
+
+function startGame() {
+    initAudio();
+    attempts = 0;
+    restartGame();
+    showScreen('game-screen');
+}
+
+function restartGame() {
+    cameraX = 0;
+    attempts++;
+    jumpCount = 0;
+    startTime = Date.now();
+
+    player.pos = new Vector3(150, groundY - player.size, 0);
+    player.vel = new Vector3(0, 0, 0);
+    player.rotation = new Vector3(0, 0, 0);
+    player.isDead = false;
+    player.trail = [];
+
+    particles3D = [];
+
+    generateObstacles();
+    obstacles.forEach(o => { if (o.triggered !== undefined) o.triggered = false; });
+
+    document.getElementById('dim-text').textContent = `DIMENSION ${currentDimension}`;
+
+    document.querySelectorAll('.overlay-3d').forEach(o => o.classList.remove('active'));
+
+    gameState = 'playing';
+}
+
+function togglePause() {
+    if (gameState === 'playing') {
+        gameState = 'paused';
+        document.getElementById('pause-overlay').classList.add('active');
+    } else if (gameState === 'paused') {
+        resumeGame();
+    }
+}
+
+function resumeGame() {
+    document.getElementById('pause-overlay').classList.remove('active');
+    gameState = 'playing';
+}
+
+function quitToMenu() {
+    document.querySelectorAll('.overlay-3d').forEach(o => o.classList.remove('active'));
+    showScreen('main-menu');
+    gameState = 'menu';
+}
+
+// Input
+window.addEventListener('mousedown', () => { isHolding = true; });
+window.addEventListener('mouseup', () => { isHolding = false; });
+window.addEventListener('touchstart', e => { e.preventDefault(); isHolding = true; }, { passive: false });
+window.addEventListener('touchend', () => { isHolding = false; });
+
+window.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w') {
+        isHolding = true;
+        e.preventDefault();
+    }
+    if (e.code === 'Escape') togglePause();
+    if (e.code === 'KeyR' && (gameState === 'dead' || gameState === 'paused')) restartGame();
+});
+
+window.addEventListener('keyup', e => {
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w') {
+        isHolding = false;
+    }
+});
+
+// =====================================================
+// UTILITY
+// =====================================================
+
+function adjustBrightness(color, factor) {
+    const hex = color.replace('#', '');
+    const r = Math.min(255, Math.floor(parseInt(hex.substr(0, 2), 16) * factor));
+    const g = Math.min(255, Math.floor(parseInt(hex.substr(2, 2), 16) * factor));
+    const b = Math.min(255, Math.floor(parseInt(hex.substr(4, 2), 16) * factor));
+    return `rgb(${r},${g},${b})`;
+}
+
+// =====================================================
+// MAIN LOOP
+// =====================================================
+
+function gameLoop() {
+    update();
+
+    ctx.clearRect(0, 0, width, height);
+    drawBackground();
+    drawGround();
+    drawObstacles();
+    drawPlayer();
+    drawFX();
+
+    camera.update();
+
+    requestAnimationFrame(gameLoop);
+}
+
+// =====================================================
+// INIT
+// =====================================================
+
+function init() {
+    // Initialize dimension particles
+    for (let i = 0; i < 100; i++) {
+        dimensionParticles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: Math.random() * 3 + 1,
+            speed: Math.random() * 2 + 0.5,
+            hue: Math.random() * 60 + 180,
+            alpha: Math.random() * 0.5 + 0.2,
+            phase: Math.random() * Math.PI * 2
+        });
+    }
+
+    // Loading animation
+    let progress = 0;
+    const loadingFill = document.getElementById('loading-fill');
+    const loadInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(loadInterval);
+            setTimeout(() => {
+                showScreen('main-menu');
+                gameState = 'menu';
+            }, 500);
+        }
+        loadingFill.style.width = progress + '%';
+    }, 100);
+
+    gameLoop();
+}
+
+init();
+    </script>
+</body>
+</html>
