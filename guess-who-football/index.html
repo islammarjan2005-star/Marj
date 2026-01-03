@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess Who: Football Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red-primary: #d32f2f;
+            --red-dark: #9a0007;
+            --red-light: #ff6659;
+            --blue-primary: #1976d2;
+            --blue-dark: #004ba0;
+            --blue-light: #63a4ff;
+            --yellow-board: #ffd54f;
+            --yellow-dark: #c8a415;
+            --plastic-shine: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.1) 100%);
+            --card-cream: #fff8e1;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Main Menu */
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        #main-menu.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .menu-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .menu-logo h1 {
+            font-family: 'Bangers', cursive;
+            font-size: 5rem;
+            color: #fff;
+            text-shadow:
+                4px 4px 0 var(--red-primary),
+                8px 8px 0 var(--blue-primary),
+                12px 12px 20px rgba(0,0,0,0.5);
+            letter-spacing: 4px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .menu-logo h2 {
+            font-family: 'Bangers', cursive;
+            font-size: 2.5rem;
+            color: var(--yellow-board);
+            text-shadow: 2px 2px 0 #000;
+            margin-top: -10px;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .menu-board {
+            background: var(--red-primary);
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow:
+                inset 0 -8px 0 var(--red-dark),
+                inset 0 8px 0 var(--red-light),
+                0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .menu-board::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 4px solid var(--red-light);
+            border-radius: 15px;
+            pointer-events: none;
+        }
+
+        .menu-btn {
+            display: block;
+            width: 280px;
+            padding: 18px 40px;
+            margin: 15px 0;
+            font-family: 'Bangers', cursive;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn.play {
+            background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+            box-shadow:
+                0 6px 0 #1b5e20,
+                0 10px 20px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .menu-btn.how {
+            background: linear-gradient(180deg, var(--blue-light) 0%, var(--blue-primary) 100%);
+            color: white;
+            box-shadow:
+                0 6px 0 var(--blue-dark),
+                0 10px 20px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .menu-btn:active {
+            transform: translateY(3px);
+            box-shadow:
+                0 2px 0 #1b5e20,
+                0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .menu-footballs {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .floating-ball {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatBall 8s infinite ease-in-out;
+            opacity: 0.3;
+        }
+
+        @keyframes floatBall {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(180deg); }
+        }
+
+        /* Game Container */
+        #game-container {
+            display: none;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        #game-container.active {
+            display: block;
+        }
+
+        /* Header */
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-header h1 {
+            font-family: 'Bangers', cursive;
+            font-size: 2.5rem;
+            color: #fff;
+            text-shadow:
+                3px 3px 0 var(--red-primary),
+                6px 6px 0 var(--blue-primary);
+            letter-spacing: 3px;
+        }
+
+        /* Game Info Bar */
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, var(--red-primary) 0%, var(--red-dark) 100%);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow:
+                inset 0 2px 0 var(--red-light),
+                0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .stat-box {
+            background: var(--yellow-board);
+            padding: 10px 25px;
+            border-radius: 10px;
+            box-shadow:
+                inset 0 -3px 0 var(--yellow-dark),
+                inset 0 3px 0 #ffe082;
+            text-align: center;
+        }
+
+        .stat-box label {
+            font-size: 0.8rem;
+            color: #5d4037;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .stat-box .value {
+            font-family: 'Bangers', cursive;
+            font-size: 2rem;
+            color: var(--red-dark);
+        }
+
+        .mystery-hint {
+            background: var(--blue-primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 700;
+            box-shadow: inset 0 -3px 0 var(--blue-dark);
+        }
+
+        /* Game Layout */
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        /* Board */
+        .board-container {
+            background: linear-gradient(180deg, var(--yellow-board) 0%, var(--yellow-dark) 100%);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow:
+                inset 0 4px 0 #ffe082,
+                inset 0 -4px 0 #c8a415,
+                0 15px 40px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .board-container::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            pointer-events: none;
+        }
+
+        .board-frame {
+            background: var(--red-primary);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow:
+                inset 0 3px 0 var(--red-light),
+                inset 0 -3px 0 var(--red-dark);
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+
+        /* Player Card */
+        .player-card {
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .player-card:hover:not(.flipped-down) {
+            transform: scale(1.05);
+        }
+
+        .player-card-inner {
+            position: relative;
+            width: 100%;
+            padding-top: 130%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .player-card.flipped-down .player-card-inner {
+            transform: rotateX(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card-front {
+            background: var(--card-cream);
+            box-shadow:
+                inset 0 0 0 3px var(--blue-primary),
+                inset 0 0 0 6px var(--blue-light),
+                0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card-back {
+            background: linear-gradient(180deg, var(--blue-primary) 0%, var(--blue-dark) 100%);
+            transform: rotateX(180deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow:
+                inset 0 0 0 3px var(--blue-light),
+                0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card-back::after {
+            content: '?';
+            font-family: 'Bangers', cursive;
+            font-size: 3rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .player-portrait {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player-avatar {
+            font-size: 3.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .player-flag {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 1.2rem;
+            background: rgba(255,255,255,0.9);
+            border-radius: 3px;
+            padding: 2px 4px;
+        }
+
+        .player-info {
+            height: 30%;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+        }
+
+        .player-name {
+            font-weight: 900;
+            font-size: 0.65rem;
+            color: #333;
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 2px;
+        }
+
+        .player-team {
+            font-size: 0.55rem;
+            color: #666;
+            text-align: center;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Mystery Card */
+        .mystery-card-container {
+            background: linear-gradient(180deg, var(--blue-primary) 0%, var(--blue-dark) 100%);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow:
+                inset 0 3px 0 var(--blue-light),
+                0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .mystery-card-container h3 {
+            font-family: 'Bangers', cursive;
+            color: white;
+            text-align: center;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .mystery-card {
+            background: var(--card-cream);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow:
+                inset 0 0 0 4px var(--red-primary),
+                inset 0 0 0 8px var(--red-light),
+                0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .mystery-portrait {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #ffebee 0%, #ffcdd2 100%);
+            position: relative;
+        }
+
+        .mystery-portrait .player-avatar {
+            font-size: 4rem;
+        }
+
+        .mystery-portrait .player-flag {
+            font-size: 1.5rem;
+        }
+
+        .mystery-info {
+            padding: 10px;
+            text-align: center;
+            background: white;
+        }
+
+        .mystery-info .player-name {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .mystery-info .player-team {
+            font-size: 0.8rem;
+        }
+
+        .mystery-hidden {
+            background: repeating-linear-gradient(
+                45deg,
+                var(--red-primary),
+                var(--red-primary) 10px,
+                var(--red-dark) 10px,
+                var(--red-dark) 20px
+            );
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mystery-hidden span {
+            font-family: 'Bangers', cursive;
+            font-size: 2rem;
+            color: white;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+
+        /* Question Panel */
+        .question-panel {
+            background: linear-gradient(180deg, var(--red-primary) 0%, var(--red-dark) 100%);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow:
+                inset 0 3px 0 var(--red-light),
+                0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .question-panel h3 {
+            font-family: 'Bangers', cursive;
+            color: white;
+            text-align: center;
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        .question-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .category-btn {
+            flex: 1;
+            min-width: calc(50% - 5px);
+            padding: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--yellow-board);
+            color: #5d4037;
+            box-shadow:
+                inset 0 -2px 0 var(--yellow-dark),
+                inset 0 2px 0 #ffe082;
+            transition: all 0.2s;
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+            background: #ffe082;
+        }
+
+        .category-btn.active {
+            background: var(--blue-primary);
+            color: white;
+            box-shadow:
+                inset 0 -2px 0 var(--blue-dark),
+                inset 0 2px 0 var(--blue-light);
+        }
+
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .question-options::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .question-options::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+
+        .question-options::-webkit-scrollbar-thumb {
+            background: var(--yellow-board);
+            border-radius: 4px;
+        }
+
+        .question-btn {
+            padding: 10px 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            color: #333;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+
+        .question-btn:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        /* Answer Display */
+        .answer-display {
+            background: var(--yellow-board);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 10px;
+            box-shadow: inset 0 -3px 0 var(--yellow-dark);
+        }
+
+        .answer-display.yes {
+            background: #4caf50;
+            color: white;
+        }
+
+        .answer-display.no {
+            background: #f44336;
+            color: white;
+        }
+
+        .answer-display p {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .answer-display .answer-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        /* Guess Button */
+        .guess-section {
+            margin-top: 10px;
+        }
+
+        .guess-btn {
+            width: 100%;
+            padding: 15px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+            box-shadow:
+                0 6px 0 #1b5e20,
+                0 10px 20px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+
+        .guess-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .guess-btn:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 2px 0 #1b5e20,
+                0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Guess Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--yellow-board);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow:
+                inset 0 4px 0 #ffe082,
+                inset 0 -4px 0 var(--yellow-dark),
+                0 20px 60px rgba(0,0,0,0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            font-family: 'Bangers', cursive;
+            font-size: 2rem;
+            color: var(--red-primary);
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        .guess-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .guess-option {
+            background: white;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .guess-option:hover {
+            border-color: var(--blue-primary);
+            transform: scale(1.05);
+        }
+
+        .guess-option.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .guess-option .player-avatar {
+            font-size: 2rem;
+        }
+
+        .guess-option .player-name {
+            font-size: 0.6rem;
+            margin-top: 5px;
+        }
+
+        .modal-close {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--red-primary);
+            color: white;
+            box-shadow: 0 4px 0 var(--red-dark);
+        }
+
+        /* Result Modal */
+        .result-modal .modal {
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .result-modal h2 {
+            font-size: 2.5rem;
+        }
+
+        .result-modal p {
+            font-size: 1.2rem;
+            color: #5d4037;
+            margin-bottom: 20px;
+        }
+
+        .result-player {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .result-player .player-avatar {
+            font-size: 4rem;
+        }
+
+        .result-player .player-name {
+            font-size: 1.5rem;
+            margin-top: 10px;
+        }
+
+        .result-player .player-team {
+            font-size: 1rem;
+        }
+
+        .play-again-btn {
+            background: linear-gradient(180deg, #4caf50 0%, #2e7d32 100%);
+            color: white;
+            padding: 15px 40px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #1b5e20;
+            margin: 10px;
+        }
+
+        /* How to Play Modal */
+        .how-to-play .modal {
+            max-width: 600px;
+        }
+
+        .how-to-play h3 {
+            font-family: 'Bangers', cursive;
+            color: var(--blue-primary);
+            font-size: 1.3rem;
+            margin: 20px 0 10px;
+        }
+
+        .how-to-play p, .how-to-play li {
+            color: #5d4037;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .how-to-play ul {
+            padding-left: 20px;
+        }
+
+        /* Animations */
+        @keyframes cardFlip {
+            0% { transform: rotateX(0); }
+            100% { transform: rotateX(180deg); }
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .celebrating {
+            animation: celebration 0.5s ease-in-out 3;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall 3s linear forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                top: 100vh;
+                transform: rotate(720deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .side-panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .mystery-card-container,
+            .question-panel {
+                flex: 1;
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .players-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .menu-logo h1 {
+                font-size: 3rem;
+            }
+
+            .menu-logo h2 {
+                font-size: 1.5rem;
+            }
+
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .players-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .guess-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Menu -->
+    <div id="main-menu">
+        <div class="menu-footballs">
+            <div class="floating-ball" style="left: 10%; top: 20%; animation-delay: 0s;">⚽</div>
+            <div class="floating-ball" style="left: 80%; top: 15%; animation-delay: 1s;">⚽</div>
+            <div class="floating-ball" style="left: 20%; top: 70%; animation-delay: 2s;">⚽</div>
+            <div class="floating-ball" style="left: 75%; top: 65%; animation-delay: 0.5s;">⚽</div>
+            <div class="floating-ball" style="left: 50%; top: 85%; animation-delay: 1.5s;">⚽</div>
+        </div>
+
+        <div class="menu-logo">
+            <h1>GUESS WHO?</h1>
+            <h2>⚽ FOOTBALL EDITION ⚽</h2>
+        </div>
+
+        <div class="menu-board">
+            <button class="menu-btn play" onclick="startGame()">▶ PLAY GAME</button>
+            <button class="menu-btn how" onclick="showHowToPlay()">❓ HOW TO PLAY</button>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container">
+        <div class="game-header">
+            <h1>⚽ GUESS WHO: FOOTBALL ⚽</h1>
+        </div>
+
+        <div class="game-info">
+            <div class="stat-box">
+                <label>Questions Asked</label>
+                <div class="value" id="questions-count">0</div>
+            </div>
+            <div class="mystery-hint">
+                <span>🔍 Ask questions to find the mystery player!</span>
+            </div>
+            <div class="stat-box">
+                <label>Players Left</label>
+                <div class="value" id="players-left">24</div>
+            </div>
+        </div>
+
+        <div class="game-layout">
+            <div class="board-container">
+                <div class="board-frame">
+                    <div class="players-grid" id="players-grid">
+                        <!-- Players will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-panel">
+                <div class="mystery-card-container">
+                    <h3>🎯 YOUR MYSTERY PLAYER</h3>
+                    <div class="mystery-card" id="mystery-card">
+                        <div class="mystery-hidden">
+                            <span>???</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question-panel">
+                    <h3>❓ ASK A QUESTION</h3>
+                    <div class="question-categories">
+                        <button class="category-btn active" data-category="position">Position</button>
+                        <button class="category-btn" data-category="nationality">Nation</button>
+                        <button class="category-btn" data-category="league">League</button>
+                        <button class="category-btn" data-category="physical">Physical</button>
+                        <button class="category-btn" data-category="traits">Traits</button>
+                        <button class="category-btn" data-category="career">Career</button>
+                    </div>
+                    <div class="question-options" id="question-options">
+                        <!-- Questions will be inserted here -->
+                    </div>
+                    <div class="answer-display" id="answer-display" style="display: none;">
+                        <div class="answer-icon"></div>
+                        <p></p>
+                    </div>
+                </div>
+
+                <div class="guess-section">
+                    <button class="guess-btn" onclick="openGuessModal()">🎯 MAKE A GUESS!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guess Modal -->
+    <div class="modal-overlay" id="guess-modal">
+        <div class="modal">
+            <h2>🤔 Who is it?</h2>
+            <div class="guess-grid" id="guess-grid">
+                <!-- Guess options will be inserted here -->
+            </div>
+            <button class="modal-close" onclick="closeGuessModal()">✖ CANCEL</button>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay result-modal" id="result-modal">
+        <div class="modal">
+            <div class="result-icon" id="result-icon">🏆</div>
+            <h2 id="result-title">Victory!</h2>
+            <p id="result-message">You guessed correctly!</p>
+            <div class="result-player" id="result-player">
+                <!-- Player info will be inserted -->
+            </div>
+            <button class="play-again-btn" onclick="startGame()">🔄 PLAY AGAIN</button>
+            <button class="play-again-btn" onclick="goToMenu()" style="background: linear-gradient(180deg, var(--blue-light) 0%, var(--blue-primary) 100%); box-shadow: 0 6px 0 var(--blue-dark);">🏠 MENU</button>
+        </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div class="modal-overlay how-to-play" id="how-modal">
+        <div class="modal">
+            <h2>📖 How To Play</h2>
+            <h3>🎯 Objective</h3>
+            <p>Guess the mystery football player by asking yes/no questions about their characteristics!</p>
+
+            <h3>🎮 Gameplay</h3>
+            <ul>
+                <li>You'll see a board of 24 famous footballers</li>
+                <li>A mystery player is secretly chosen</li>
+                <li>Ask questions about position, nationality, league, and more</li>
+                <li>Click on players to flip them face-down when eliminated</li>
+                <li>The fewer questions you ask, the better!</li>
+            </ul>
+
+            <h3>💡 Tips</h3>
+            <ul>
+                <li>Start with broad questions (e.g., "Is the player a forward?")</li>
+                <li>Narrow down by league or nationality</li>
+                <li>Use physical traits when few players remain</li>
+                <li>Click players to eliminate them from your board</li>
+            </ul>
+
+            <h3>🏆 Scoring</h3>
+            <p>Try to guess in as few questions as possible! Can you do it in under 5?</p>
+
+            <button class="modal-close" onclick="closeHowToPlay()">✖ GOT IT!</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // FOOTBALL PLAYERS DATABASE
+        // ==========================================
+        const players = [
+            {
+                id: 1, name: "Lionel Messi", team: "Inter Miami", league: "MLS",
+                nationality: "Argentina", flag: "🇦🇷", avatar: "👨‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "veteran", height: "short", skinTone: "light",
+                hasWonBallon: true, hasWonWorldCup: true, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: true, isCaptain: true,
+                wearsNumber10: true, isLeftFooted: true
+            },
+            {
+                id: 2, name: "Cristiano Ronaldo", team: "Al-Nassr", league: "Saudi Pro",
+                nationality: "Portugal", flag: "🇵🇹", avatar: "👨",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "veteran", height: "tall", skinTone: "medium",
+                hasWonBallon: true, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: true, hasPlayedInItaly: true, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 3, name: "Kylian Mbappé", team: "Real Madrid", league: "La Liga",
+                nationality: "France", flag: "🇫🇷", avatar: "👨🏿‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "medium", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: true, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 4, name: "Erling Haaland", team: "Man City", league: "Premier League",
+                nationality: "Norway", flag: "🇳🇴", avatar: "👱",
+                position: "Striker", positionType: "attacker",
+                hairColor: "blonde", hasFacialHair: false, isBalding: false,
+                age: "young", height: "tall", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 5, name: "Kevin De Bruyne", team: "Man City", league: "Premier League",
+                nationality: "Belgium", flag: "🇧🇪", avatar: "👨‍🦰",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "ginger", hasFacialHair: true, isBalding: false,
+                age: "veteran", height: "medium", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 6, name: "Virgil van Dijk", team: "Liverpool", league: "Premier League",
+                nationality: "Netherlands", flag: "🇳🇱", avatar: "👨🏿",
+                position: "Defender", positionType: "defender",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "veteran", height: "tall", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 7, name: "Neymar Jr", team: "Al-Hilal", league: "Saudi Pro",
+                nationality: "Brazil", flag: "🇧🇷", avatar: "👨🏽‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "prime", height: "medium", skinTone: "medium",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: true, isLeftFooted: false
+            },
+            {
+                id: 8, name: "Robert Lewandowski", team: "Barcelona", league: "La Liga",
+                nationality: "Poland", flag: "🇵🇱", avatar: "👨",
+                position: "Striker", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "veteran", height: "tall", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 9, name: "Mohamed Salah", team: "Liverpool", league: "Premier League",
+                nationality: "Egypt", flag: "🇪🇬", avatar: "👨🏽‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "prime", height: "medium", skinTone: "medium",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: true, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: true
+            },
+            {
+                id: 10, name: "Luka Modrić", team: "Real Madrid", league: "La Liga",
+                nationality: "Croatia", flag: "🇭🇷", avatar: "👨‍🦳",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "blonde", hasFacialHair: false, isBalding: false,
+                age: "veteran", height: "short", skinTone: "light",
+                hasWonBallon: true, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: true, isLeftFooted: false
+            },
+            {
+                id: 11, name: "Thibaut Courtois", team: "Real Madrid", league: "La Liga",
+                nationality: "Belgium", flag: "🇧🇪", avatar: "👨",
+                position: "Goalkeeper", positionType: "goalkeeper",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "prime", height: "tall", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 12, name: "Alisson Becker", team: "Liverpool", league: "Premier League",
+                nationality: "Brazil", flag: "🇧🇷", avatar: "👨🏽",
+                position: "Goalkeeper", positionType: "goalkeeper",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "prime", height: "tall", skinTone: "medium",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: true, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 13, name: "Jude Bellingham", team: "Real Madrid", league: "La Liga",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👨🏿‍🦱",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "tall", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 14, name: "Vinicius Jr", team: "Real Madrid", league: "La Liga",
+                nationality: "Brazil", flag: "🇧🇷", avatar: "👨🏿‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "medium", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 15, name: "Pedri", team: "Barcelona", league: "La Liga",
+                nationality: "Spain", flag: "🇪🇸", avatar: "👨‍🦱",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "short", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 16, name: "Rodri", team: "Man City", league: "Premier League",
+                nationality: "Spain", flag: "🇪🇸", avatar: "👨",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "prime", height: "tall", skinTone: "light",
+                hasWonBallon: true, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 17, name: "Harry Kane", team: "Bayern Munich", league: "Bundesliga",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👨",
+                position: "Striker", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: true,
+                age: "prime", height: "tall", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 18, name: "Bukayo Saka", team: "Arsenal", league: "Premier League",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👨🏿‍🦱",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "medium", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 19, name: "Phil Foden", team: "Man City", league: "Premier League",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👱",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "blonde", hasFacialHair: false, isBalding: false,
+                age: "young", height: "short", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 20, name: "Gianluigi Donnarumma", team: "PSG", league: "Ligue 1",
+                nationality: "Italy", flag: "🇮🇹", avatar: "👨‍🦱",
+                position: "Goalkeeper", positionType: "goalkeeper",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "tall", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: false, hasPlayedInItaly: true, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 21, name: "Trent Alexander-Arnold", team: "Liverpool", league: "Premier League",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👨🏿‍🦱",
+                position: "Defender", positionType: "defender",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "young", height: "medium", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 22, name: "Karim Benzema", team: "Al-Ittihad", league: "Saudi Pro",
+                nationality: "France", flag: "🇫🇷", avatar: "👨🏽",
+                position: "Striker", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: true, isBalding: true,
+                age: "veteran", height: "tall", skinTone: "medium",
+                hasWonBallon: true, hasWonWorldCup: false, hasPlayedInSpain: true,
+                hasPlayedInEngland: false, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            },
+            {
+                id: 23, name: "Marcus Rashford", team: "Man United", league: "Premier League",
+                nationality: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", avatar: "👨🏿",
+                position: "Forward", positionType: "attacker",
+                hairColor: "dark", hasFacialHair: false, isBalding: false,
+                age: "prime", height: "tall", skinTone: "dark",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: false,
+                wearsNumber10: true, isLeftFooted: false
+            },
+            {
+                id: 24, name: "Bruno Fernandes", team: "Man United", league: "Premier League",
+                nationality: "Portugal", flag: "🇵🇹", avatar: "👨‍🦱",
+                position: "Midfielder", positionType: "midfielder",
+                hairColor: "dark", hasFacialHair: true, isBalding: false,
+                age: "prime", height: "medium", skinTone: "light",
+                hasWonBallon: false, hasWonWorldCup: false, hasPlayedInSpain: false,
+                hasPlayedInEngland: true, hasPlayedInItaly: false, isCaptain: true,
+                wearsNumber10: false, isLeftFooted: false
+            }
+        ];
+
+        // ==========================================
+        // QUESTIONS DATABASE
+        // ==========================================
+        const questions = {
+            position: [
+                { text: "Is the player a goalkeeper?", check: p => p.positionType === "goalkeeper" },
+                { text: "Is the player a defender?", check: p => p.positionType === "defender" },
+                { text: "Is the player a midfielder?", check: p => p.positionType === "midfielder" },
+                { text: "Is the player an attacker/forward?", check: p => p.positionType === "attacker" },
+                { text: "Is the player a striker specifically?", check: p => p.position === "Striker" }
+            ],
+            nationality: [
+                { text: "Is the player from South America?", check: p => ["Argentina", "Brazil"].includes(p.nationality) },
+                { text: "Is the player from Europe?", check: p => ["Portugal", "France", "Norway", "Belgium", "Netherlands", "Croatia", "Spain", "England", "Italy", "Poland"].includes(p.nationality) },
+                { text: "Is the player from England?", check: p => p.nationality === "England" },
+                { text: "Is the player from Brazil?", check: p => p.nationality === "Brazil" },
+                { text: "Is the player from Spain?", check: p => p.nationality === "Spain" },
+                { text: "Is the player from France?", check: p => p.nationality === "France" },
+                { text: "Is the player from Portugal?", check: p => p.nationality === "Portugal" }
+            ],
+            league: [
+                { text: "Does the player play in the Premier League?", check: p => p.league === "Premier League" },
+                { text: "Does the player play in La Liga?", check: p => p.league === "La Liga" },
+                { text: "Does the player play in the Saudi Pro League?", check: p => p.league === "Saudi Pro" },
+                { text: "Does the player play in Bundesliga?", check: p => p.league === "Bundesliga" },
+                { text: "Does the player play in Ligue 1?", check: p => p.league === "Ligue 1" },
+                { text: "Does the player play for Real Madrid?", check: p => p.team === "Real Madrid" },
+                { text: "Does the player play for Man City?", check: p => p.team === "Man City" },
+                { text: "Does the player play for Liverpool?", check: p => p.team === "Liverpool" }
+            ],
+            physical: [
+                { text: "Does the player have blonde/light hair?", check: p => p.hairColor === "blonde" || p.hairColor === "ginger" },
+                { text: "Does the player have dark hair?", check: p => p.hairColor === "dark" },
+                { text: "Does the player have facial hair?", check: p => p.hasFacialHair },
+                { text: "Is the player balding?", check: p => p.isBalding },
+                { text: "Is the player tall (over 6ft)?", check: p => p.height === "tall" },
+                { text: "Is the player short (under 5'9)?", check: p => p.height === "short" },
+                { text: "Does the player have dark skin?", check: p => p.skinTone === "dark" }
+            ],
+            traits: [
+                { text: "Is the player a team captain?", check: p => p.isCaptain },
+                { text: "Is the player left-footed?", check: p => p.isLeftFooted },
+                { text: "Does the player wear #10?", check: p => p.wearsNumber10 }
+            ],
+            career: [
+                { text: "Has the player won the Ballon d'Or?", check: p => p.hasWonBallon },
+                { text: "Has the player won the World Cup?", check: p => p.hasWonWorldCup },
+                { text: "Has the player played in Spain?", check: p => p.hasPlayedInSpain },
+                { text: "Has the player played in England?", check: p => p.hasPlayedInEngland },
+                { text: "Has the player played in Italy?", check: p => p.hasPlayedInItaly },
+                { text: "Is the player young (under 25)?", check: p => p.age === "young" },
+                { text: "Is the player a veteran (over 32)?", check: p => p.age === "veteran" }
+            ]
+        };
+
+        // ==========================================
+        // GAME STATE
+        // ==========================================
+        let gameState = {
+            mysteryPlayer: null,
+            flippedCards: new Set(),
+            questionsAsked: 0,
+            currentCategory: "position"
+        };
+
+        // ==========================================
+        // GAME FUNCTIONS
+        // ==========================================
+        function startGame() {
+            // Reset game state
+            gameState = {
+                mysteryPlayer: players[Math.floor(Math.random() * players.length)],
+                flippedCards: new Set(),
+                questionsAsked: 0,
+                currentCategory: "position"
+            };
+
+            // Hide menu, show game
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-container').classList.add('active');
+            closeResultModal();
+
+            // Render the board
+            renderBoard();
+            renderMysteryCard();
+            renderQuestions();
+            updateStats();
+        }
+
+        function renderBoard() {
+            const grid = document.getElementById('players-grid');
+            grid.innerHTML = '';
+
+            players.forEach(player => {
+                const card = document.createElement('div');
+                card.className = 'player-card';
+                card.dataset.playerId = player.id;
+                card.onclick = () => toggleCard(player.id);
+
+                card.innerHTML = `
+                    <div class="player-card-inner">
+                        <div class="card-front">
+                            <div class="player-portrait">
+                                <span class="player-avatar">${player.avatar}</span>
+                                <span class="player-flag">${player.flag}</span>
+                            </div>
+                            <div class="player-info">
+                                <div class="player-name">${player.name}</div>
+                                <div class="player-team">${player.team}</div>
+                            </div>
+                        </div>
+                        <div class="card-back"></div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function renderMysteryCard() {
+            const card = document.getElementById('mystery-card');
+            card.innerHTML = `
+                <div class="mystery-hidden">
+                    <span>???</span>
+                </div>
+            `;
+        }
+
+        function revealMysteryCard() {
+            const player = gameState.mysteryPlayer;
+            const card = document.getElementById('mystery-card');
+            card.innerHTML = `
+                <div class="mystery-portrait">
+                    <span class="player-avatar">${player.avatar}</span>
+                    <span class="player-flag">${player.flag}</span>
+                </div>
+                <div class="mystery-info">
+                    <div class="player-name">${player.name}</div>
+                    <div class="player-team">${player.team}</div>
+                </div>
+            `;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('question-options');
+            const categoryQuestions = questions[gameState.currentCategory];
+
+            container.innerHTML = '';
+            categoryQuestions.forEach((q, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'question-btn';
+                btn.textContent = q.text;
+                btn.onclick = () => askQuestion(q);
+                container.appendChild(btn);
+            });
+
+            // Update category buttons
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === gameState.currentCategory);
+            });
+        }
+
+        function toggleCard(playerId) {
+            const card = document.querySelector(`[data-player-id="${playerId}"]`);
+            if (gameState.flippedCards.has(playerId)) {
+                gameState.flippedCards.delete(playerId);
+                card.classList.remove('flipped-down');
+            } else {
+                gameState.flippedCards.add(playerId);
+                card.classList.add('flipped-down');
+            }
+            updateStats();
+        }
+
+        function askQuestion(question) {
+            const answer = question.check(gameState.mysteryPlayer);
+            gameState.questionsAsked++;
+
+            // Show answer
+            const display = document.getElementById('answer-display');
+            display.style.display = 'block';
+            display.className = `answer-display ${answer ? 'yes' : 'no'}`;
+            display.innerHTML = `
+                <div class="answer-icon">${answer ? '✅' : '❌'}</div>
+                <p>${answer ? 'YES!' : 'NO!'}</p>
+            `;
+
+            // Auto-flip cards based on answer
+            players.forEach(player => {
+                const matches = question.check(player);
+                if (answer !== matches && !gameState.flippedCards.has(player.id)) {
+                    toggleCard(player.id);
+                }
+            });
+
+            updateStats();
+
+            // Hide answer after delay
+            setTimeout(() => {
+                display.style.display = 'none';
+            }, 2000);
+        }
+
+        function updateStats() {
+            document.getElementById('questions-count').textContent = gameState.questionsAsked;
+            document.getElementById('players-left').textContent = players.length - gameState.flippedCards.size;
+        }
+
+        function openGuessModal() {
+            const modal = document.getElementById('guess-modal');
+            const grid = document.getElementById('guess-grid');
+
+            grid.innerHTML = '';
+            players.forEach(player => {
+                const option = document.createElement('div');
+                option.className = `guess-option ${gameState.flippedCards.has(player.id) ? 'disabled' : ''}`;
+                option.innerHTML = `
+                    <div class="player-avatar">${player.avatar}</div>
+                    <div class="player-flag">${player.flag}</div>
+                    <div class="player-name">${player.name}</div>
+                `;
+                option.onclick = () => makeGuess(player);
+                grid.appendChild(option);
+            });
+
+            modal.classList.add('active');
+        }
+
+        function closeGuessModal() {
+            document.getElementById('guess-modal').classList.remove('active');
+        }
+
+        function makeGuess(player) {
+            closeGuessModal();
+            revealMysteryCard();
+
+            const correct = player.id === gameState.mysteryPlayer.id;
+            const modal = document.getElementById('result-modal');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const message = document.getElementById('result-message');
+            const playerDiv = document.getElementById('result-player');
+
+            if (correct) {
+                icon.textContent = '🏆';
+                title.textContent = 'VICTORY!';
+                title.style.color = '#4caf50';
+                message.textContent = `You guessed it in ${gameState.questionsAsked} question${gameState.questionsAsked !== 1 ? 's' : ''}!`;
+                createConfetti();
+            } else {
+                icon.textContent = '😢';
+                title.textContent = 'WRONG!';
+                title.style.color = '#f44336';
+                message.textContent = `You guessed ${player.name}, but the answer was...`;
+            }
+
+            playerDiv.innerHTML = `
+                <div class="player-avatar">${gameState.mysteryPlayer.avatar}</div>
+                <div class="player-flag">${gameState.mysteryPlayer.flag}</div>
+                <div class="player-name">${gameState.mysteryPlayer.name}</div>
+                <div class="player-team">${gameState.mysteryPlayer.team}</div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeResultModal() {
+            document.getElementById('result-modal').classList.remove('active');
+        }
+
+        function goToMenu() {
+            closeResultModal();
+            document.getElementById('game-container').classList.remove('active');
+            document.getElementById('main-menu').classList.remove('hidden');
+        }
+
+        function showHowToPlay() {
+            document.getElementById('how-modal').classList.add('active');
+        }
+
+        function closeHowToPlay() {
+            document.getElementById('how-modal').classList.remove('active');
+        }
+
+        function createConfetti() {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // Category button handlers
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                gameState.currentCategory = btn.dataset.category;
+                renderQuestions();
+            });
+        });
+    </script>
+</body>
+</html>
